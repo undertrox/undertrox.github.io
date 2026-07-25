@@ -247,8 +247,11 @@ function code(team){ return abbreviations[team] || String(team); }
    third-place play-off, is intentionally outside the radial tree.) */
 const ROOT = 31;
 const CHILDREN = {
-  16:[0,1], 17:[2,3], 18:[4,5], 19:[6,7],
-  20:[8,9], 21:[10,11], 22:[12,13], 23:[14,15],
+  // f: 5
+  // k: 10
+  //
+  16:[0,15], 17:[6,9], 18:[2,13], 19:[4,11],
+  20:[1,14], 21:[7,8], 22:[3,12], 23:[5,10],
 
   24:[16,17], 25:[18,19], 26:[21,20], 27:[22,23],
   28:[24,25], 29:[26,27],
