@@ -116,7 +116,7 @@ window.data = {
             "num": 12,
             "team1": "tankoda",
             "team2": "int_k0ng",
-            "team3": "d3rpinator ",
+            "team3": "d3rpinator",
             "score": {},
             "group": "Group M",
             "start": "2026-07-17 00:00 UTC+2",
@@ -155,8 +155,13 @@ window.data = {
 window.abbreviations = {
     "bodo_ori": "bodo",
     "Dariusbugs": "Darius",
-    "Masterozo": "Masterozo",
     "anice5293": "anice",
-    "SpeedWagon": "SpeedWagon",
-    "SilverPaper": "SilverPaper",
+    "int__k0ng": "Casey",
+    "erlantrujillo_48211": "erlantrujillo",
+    "Nara.ori":"Nara",
+    "daydre4ming": "reza",
+    "izzyoo": "izzy",
+    "Seal2324": "Seal",
+    "Paulorigami": "Paul",
+    "T DexParty": "T_Dex"
 }

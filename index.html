@@ -197,6 +197,7 @@
   <div class="stage" id="stage" aria-label="World Cup 2026 knockout bracket"></div>
 
   <script src="data.js"></script>
+  <script src="pfps.js"></script>
 <script>
 "use strict";
 /* ============================================================================
@@ -220,21 +221,11 @@ const FEED_COMMITS_URL = "https://api.github.com/repos/openfootball/worldcup.jso
 /* Team name -> ISO 3166-1 alpha-2 (flagcdn slug). The only hand-authored data.
    Must match the exact strings the feed uses. */
 const ISO = {
-  "South Africa":"za","Canada":"ca","Germany":"de","Paraguay":"py",
-  "Netherlands":"nl","Morocco":"ma","Brazil":"br","Japan":"jp",
-  "France":"fr","Sweden":"se","Ivory Coast":"ci","Norway":"no",
-  "Mexico":"mx","Ecuador":"ec","England":"gb-eng","DR Congo":"cd",
-  "USA":"us","Bosnia & Herzegovina":"ba","Belgium":"be","Senegal":"sn",
-  "Portugal":"pt","Croatia":"hr","Spain":"es","Austria":"at",
-  "Switzerland":"ch","Algeria":"dz","Argentina":"ar","Cape Verde":"cv",
-  "Colombia":"co","Ghana":"gh","Australia":"au","Egypt":"eg",
-  // a few likely-alternates so a feed rename won't blank a flag
-  "United States":"us","Côte d'Ivoire":"ci","Cabo Verde":"cv",
-  "IR Iran":"ir","Iran":"ir","Korea Republic":"kr","South Korea":"kr",
-  "USA ":"us"
+
 };
 function flagURL(team, w){ // w = flagcdn width bucket
   const iso = ISO[team]||team;
+
   return iso ? `pfp/${iso}.webp` : "";
 }
 
@@ -662,14 +653,11 @@ function render(model){
   }
   stage.innerHTML = html;
   prevWinners = newWinners;
-  // re-render replaced the stage DOM, so refresh the legend + venue spotlight
-  buildLegend(model);
-  applyVenueHL();
 }
 
 function roundName(num){
   const l = levelOf(num);
-  return ["","Round of 32","Round of 16","Quarter-final","Semi-final","Final"][l];
+  return ["","Round of 48","Round of 16","Quarter-final","Semi-final","Final"][l];
 }
 function escapeAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
 function escapeHTML(s){ return escapeAttr(s).replace(/>/g,"&gt;"); }
@@ -833,9 +821,7 @@ async function load(){
     const [raw] = await Promise.all([fetchResults(), refreshDataUpdatedAt()]);
     floorUpdatedAtToResults(raw);
     render(buildModel(normalize(raw)));
-    stamp(true);
   }catch(err){
-    stamp(false, "couldn't load results — reload to retry");
     console.warn("fetch failed:", err);
   }
 }
