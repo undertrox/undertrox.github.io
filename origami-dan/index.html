@@ -195,9 +195,15 @@
   </header>
 
   <div class="stage" id="stage" aria-label="World Cup 2026 knockout bracket"></div>
-
+  <div class="controls">
+    <button id="toggle" onclick="toggleTip()">Enable Tip Mode</button>
+    <button id="copy" onclick="exportWin()">Copy Tip URL</button></div>
   <script src="data.js"></script>
   <script src="pfps.js"></script>
+  <script type="text/javascript" src="dist/browser/json-url.js"></script>
+  <script>
+
+  </script>
 <script>
 "use strict";
 /* ============================================================================
@@ -211,7 +217,7 @@
      layout()        -> polar (radius, angle) per node, bottom-up angle = mean
      render()        -> SVG lines/dots/trophy + HTML circular flags, diff-animated
 ============================================================================ */
-
+const lib = JsonUrl('lzma'); // JsonUrl is added to the window object
 /* ----------------------------- Config -------------------------------------- */
 const FEED_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
 /* Last-commit time of the feed file = when the source data actually changed.
@@ -236,7 +242,7 @@ function code(team){ return abbreviations[team] || String(team); }
    Fixed and known in advance; results only overlay on top. R32 (73–88) are
    the leaves whose two participants are the team flags. (Match 103, the
    third-place play-off, is intentionally outside the radial tree.) */
-const ROOT = 31;
+const ROOT = 30;
 const CHILDREN = {
   // f: 5
   // k: 10
@@ -246,12 +252,12 @@ const CHILDREN = {
 
   24:[16,17], 25:[18,19], 26:[20,21], 27:[22,23],
   28:[24,25], 29:[26,27],
-  31:[29,28]
+  30:[29,28]
 };
 const R32_NUMS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 const R32SET = new Set(R32_NUMS);
 // every match node on the radial bracket, outer ring first
-const NODE_NUMS = [...R32_NUMS, 16,17,18,19,20,21,22,23, 24,25,26,27, 28,29, 31];
+const NODE_NUMS = [...R32_NUMS, 16,17,18,19,20,21,22,23, 24,25,26,27, 28,29, 30];
 
 /* Reverse of CHILDREN: match num -> its parent (the next-round match its winner
    advances into). R32 leaves point at their R16 match; the Final (ROOT) has no
@@ -392,6 +398,7 @@ function buildModel(feed){
     node[num] = { participants:p, winner:winner(num), score:sc, label:scoreLabel(sc), group:m.group,
                   date:m.date||"", time:m.time||"", ground:m.ground||"", start:m.start || "", end:m.end || "" };
   }
+  window.modelCache = node;
   return node;
 }
 
@@ -454,6 +461,7 @@ const LIVE_MS = 150*60000; // 2.5 h
 const DECK_MS = 240*60000; // 4 h
 const SOON_MS = 720*60000; // 12 h
 const EXTENSION_MS = 2*24*60*60*1000; // 2 days
+window.tipMode = false;
 // "live" | "deck" | "soon" | "" for a match node, based on the viewer's clock.
 // Only matches with both teams known and no result yet can be highlighted.
 function matchStatus(node, now){
@@ -590,7 +598,7 @@ function render(model){
     const elim = win && win!==team; // this team lost its R32 match
     const tip = tipFor(model,f.num);
     flags.push({x,y,team,cls:"r0"+(elim?" eliminated":(win===team?" win":""))+hlClass(tip),
-                tip, ground:model[f.num].ground});
+                tip, gameid:f.num, ground:model[f.num].ground, slot:f.slot});
   });
 
   // Build connectors + dots/winner-flags for every match node
@@ -622,7 +630,8 @@ function render(model){
       // R32 ring uses (winner of two adjacent participants). So on each ring inward,
       // the flag that advanced out of that round is highlighted.
       const advanced = nextNum!=null && model[nextNum] && model[nextNum].winner===w ? " win" : "";
-      flags.push({x,y,team:w,cls:`r${lvl}${advanced}${pop}${hlClass(tip)}`, tip, ground:model[num].ground});
+      const slot = CHILDREN[nextNum][0] === num? 0 : 1;
+      flags.push({x,y,team:w,cls:`r${lvl}${advanced}${pop}${hlClass(tip)}`, gameid:nextNum, slot, tip, ground:model[num].ground});
     } else {
       dots += `<circle class="dot" ${gAttr} cx="${x}" cy="${y}" r="3.4"/>`;
     }
@@ -656,7 +665,7 @@ function render(model){
     const data = tipAttrs(t, fl.ground);
     if (src){
       // on image error, fall back to a neutral circle so the bracket never gaps
-      html += `<img class="flag ${fl.cls}" src="${src}" alt="${fl.team}" ${data} loading="lazy"
+      html += `<img onclick="win(${fl.gameid}, ${fl.slot})" class="flag ${fl.cls}" src="${src}" alt="${fl.team}" ${data} loading="lazy"
                  style="left:${left}%;top:${top}%" onerror="this.removeAttribute('src');this.style.background='#cfc9bd'"/>`;
     } else {
       // unknown team string -> neutral placeholder so the bracket never blanks
@@ -665,6 +674,62 @@ function render(model){
   }
   stage.innerHTML = html;
   prevWinners = newWinners;
+}
+
+function toggleTip() {
+  tipMode = !tipMode;
+  const btn = document.getElementById("toggle");
+  if (tipMode){
+    btn.textContent = "Disable Tip Mode";
+  } else {
+    btn.textContent = "Enable Tip Mode";
+  }
+}
+
+function compress(winners){
+  let out = ""
+  for (const w of winners.toSorted((a, b) => a.m-b.m)) {
+    out+= w.w === undefined? "_" : w.w;
+  }
+  return out;
+}
+
+function decompress(winnersCompressed){
+  let out = [];
+  for (let i = 0; i < winnersCompressed.length; i++) {
+    out.push({
+      m:i,
+      w:winnersCompressed[i]
+    })
+  }
+  return out;
+}
+
+async function exportWin() {
+
+  const e = data.matches.map(m => {
+    const winnerName = (modelCache[m.num] || {}).winner;
+    let winnerId = modelCache[m.num].participants.indexOf(winnerName);
+    return {m: m.num, w: (winnerId === -1 || !winnerName)? undefined : winnerId};
+  })
+
+
+  const compressed = compress(e);
+  const fullUrl = location.href.split("?")[0] + "?tip=" + compressed;
+  await navigator.clipboard.writeText(fullUrl)
+  document.getElementById("copy").textContent = "Copied!";
+  setTimeout(()=>{
+    document.getElementById("copy").textContent = "Copy Tip URL";}, 1000)
+  console.log(fullUrl);
+}
+
+function win(match, slot) {
+  if (!tipMode) {
+    return
+  }
+  const score = [[1,0,0],[0,1,0],[0,0,1]][slot]
+  data.matches[match].score = {withPenalty: score, noPenalty:score};
+  load();
 }
 
 function roundName(num){
@@ -828,9 +893,10 @@ function stamp(ok, msg){
   statusEl.textContent = parts.join(" · ");
 }
 
-async function load(){
+function load(){
   try{
-    const [raw] = await Promise.all([fetchResults(), refreshDataUpdatedAt()]);
+    //const [raw] = await Promise.all([fetchResults(), refreshDataUpdatedAt()]);
+    const raw = data.matches;
     floorUpdatedAtToResults(raw);
     render(buildModel(normalize(raw)));
   }catch(err){
@@ -838,7 +904,22 @@ async function load(){
   }
 }
 
-load();
+async function initalLoad() {
+  var url = new URL(location.href);
+  var w = url.searchParams.get("tip");
+  if (w) {
+    const decompressed = decompress(w);
+    for (const element of decompressed) {
+      if (element && element.w) {
+        const score = [[1,0,0],[0,1,0],[0,0,1]][element.w];
+        data.matches[element.m].score = {withPenalty: score, noPenalty: score};
+      }
+    }
+  }
+  load();
+}
+
+initalLoad();
 </script>
 </body>
 </html>
