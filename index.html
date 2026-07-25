@@ -242,7 +242,7 @@ const CHILDREN = {
   // k: 10
   //
   16:[0,15], 17:[6,9], 18:[2,13], 19:[4,11],
-  20:[1,14], 21:[7,8], 22:[3,12], 23:[5,10],
+  20:[7,8], 21:[1,14], 22:[3,12], 23:[5,10],
 
   24:[16,17], 25:[18,19], 26:[21,20], 27:[22,23],
   28:[24,25], 29:[26,27],
@@ -287,7 +287,15 @@ const FLAG_ORDER = dfsFlags(ROOT); // length 32
 
 // flag index -> angle (deg, measured from 12 o'clock, clockwise positive).
 function flagAngle(i){
-  return (i<24) ? -(i+0.5)*STEP : ((i-24)+0.5)*STEP;
+  const baseAngle = (i<24) ? -(i+0.5)*STEP : ((i-24)+0.5)*STEP;
+  if (i % 3 === 1) {
+    return baseAngle;
+  }
+  const adjustment = ((i<24)? 1: -1) * 0.65;
+  if (i % 3 === 0) {
+    return baseAngle - adjustment;
+  }
+  return baseAngle + adjustment;
 }
 // match num -> angle (deg). Leaf = mean of its two flags; inner = mean of children.
 const _angleMemo = {};
