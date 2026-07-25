@@ -341,7 +341,11 @@ function winnerIndex(score){
   if (!score) return null;
   const s = score.withPenalty || score.et || score.ft;
   if (!s || s.length<2 || s[0]===s[1] && s[1]===s[2]) return null;
-
+  if (s.length === 3) {
+    if (s[0] > s[1] && s[0] > s[2]) return 0;
+    if (s[1] > s[0] && s[1] > s[2]) return 1;
+    if (s[2] > s[1] && s[2] > s[0]) return 2;
+  }
   return s[0] > s[1] ? 0 : 1;
 }
 function scoreLabel(score){
