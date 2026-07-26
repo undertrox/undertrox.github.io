@@ -196,8 +196,8 @@
 
   <div class="stage" id="stage" aria-label="World Cup 2026 knockout bracket"></div>
   <div class="controls">
-    <button id="toggle" onclick="toggleTip()">Enable Tip Mode</button>
-    <button id="copy" onclick="exportWin()">Copy Tip URL</button></div>
+    <button id="toggle" onclick="toggleTip()">Enable Prediction Mode</button>
+    <button id="copy" onclick="exportWin()">Copy Prediction URL</button></div>
   <script src="data.js"></script>
   <script src="pfps.js"></script>
   <script type="text/javascript" src="dist/browser/json-url.js"></script>
@@ -677,12 +677,12 @@ function render(model){
 }
 
 function toggleTip() {
-  tipMode = !tipMode;
+  window.tipMode = !tipMode;
   const btn = document.getElementById("toggle");
   if (tipMode){
-    btn.textContent = "Disable Tip Mode";
+    btn.textContent = "Disable Prediction Mode";
   } else {
-    btn.textContent = "Enable Tip Mode";
+    btn.textContent = "Enable Prediction Mode";
   }
 }
 
@@ -719,7 +719,7 @@ async function exportWin() {
   await navigator.clipboard.writeText(fullUrl)
   document.getElementById("copy").textContent = "Copied!";
   setTimeout(()=>{
-    document.getElementById("copy").textContent = "Copy Tip URL";}, 1000)
+    document.getElementById("copy").textContent = "Copy Prediction URL";}, 1000)
   console.log(fullUrl);
 }
 
