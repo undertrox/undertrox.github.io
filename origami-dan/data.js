@@ -54,7 +54,7 @@ window.data = {
             "num": 5,
             "team1": "anotherpapersmith",
             "team2": "PoLo",
-            "team3": "andmet6",
+            "team3": "kyofolds",
             "score": {},
             "group": "Group F",
             "start": "2026-07-17 00:00 UTC+2",
